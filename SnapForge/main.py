@@ -1,32 +1,57 @@
-# main.py
 import sys
 import logging
 import traceback
 from PyQt6.QtWidgets import QApplication, QMessageBox
+
+# 保留原有导入和变量
 from ui import BatchRenameApp
 
-def main():
-    # 初始化日志记录
-    logging.basicConfig(filename='app.log', level=logging.DEBUG,  # 设置为 DEBUG 以便调试
-                        format='%(asctime)s - %(levelname)s - %(filename)s - %(lineno)d - %(message)s')
+def configure_logging() -> None:
+    """配置应用日志记录"""
+    logging.basicConfig(
+        filename='app.log',
+        level=logging.DEBUG,
+        format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+    )
+    logging.info("日志系统初始化完成")
 
+def handle_exception(exc_type, exc_value, exc_traceback) -> None:
+    """全局异常处理"""
+    error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+    logging.error(f"未捕获的异常：{error_msg}")
+    
+    # 显示用户友好的错误提示
+    QMessageBox.critical(
+        None,
+        "应用程序错误",
+        "发生严重错误，程序即将退出。详细信息已记录到日志文件。"
+    )
+    sys.exit(1)
+
+def main() -> None:
+    # 设置全局异常处理
+    sys.excepthook = handle_exception
+
+    # 初始化日志
+    configure_logging()
+    logging.info("应用程序启动")
+
+    # 创建Qt应用
     app = QApplication(sys.argv)
-
+    
     try:
+        # 主窗口初始化
         window = BatchRenameApp()
         window.show()
-        sys.exit(app.exec())
-
-    except Exception as e:
-        # 捕获完整的堆栈信息
-        error_msg = f"发生未捕获的异常：\n{str(e)}"
-        error_detail = traceback.format_exc()  # 获取堆栈信息
-        logging.error(error_detail)  # 记录完整堆栈信息到日志文件
         
-        # 弹出用户友好的错误对话框
-        user_msg = "应用程序遇到严重错误并将关闭。请检查日志文件了解详情。"
-        QMessageBox.critical(None, "错误", user_msg)
-        sys.exit(1)
+        # 正常退出处理
+        exit_code = app.exec()
+        logging.info("应用程序正常退出")
+        sys.exit(exit_code)
+        
+    except Exception as e:
+        # 捕获未处理的异常
+        handle_exception(type(e), e, e.__traceback__)
 
 if __name__ == "__main__":
     main()
