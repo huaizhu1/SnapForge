@@ -1,6 +1,6 @@
 
 <div align="center" style="display: flex; align-items: center;">
-  <img src="https://raw.githubusercontent.com/riceshowerX/picx-images-hosting/master/%E7%BD%91%E7%AB%99%E5%9B%BE%E6%A0%87%E5%B7%B2%E6%B3%A8%E5%86%8C/%E7%A4%BE%E4%BA%A4%E5%A4%B4%E5%83%8F.64dt0cv31m.webp" alt="Logo" width="70" height="70" style="margin-right: 10px;"> 
+  <img src="https://github.com/riceshowerX/picx-images-hosting/raw/master/网站/android-chrome-192x192-1.6wqw9el8i6.webp" alt="Logo" width="70" height="70" style="margin-right: 10px;"> 
   <h1>SnapForge</h1> 
 </div>
 
