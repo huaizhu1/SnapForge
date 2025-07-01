@@ -40,7 +40,7 @@ pip install -r requirements.txt
 ### 3. 启动 SnapForge
 
 ```bash
-python gui.py
+python ui.py
 ```
 
 ### 🎨 截图
