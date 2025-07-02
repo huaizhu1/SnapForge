@@ -2,4 +2,3 @@ PyQt6
 Pillow
 opencv-python
 numpy
-PyQt6-Fluent-Widgets[full]
