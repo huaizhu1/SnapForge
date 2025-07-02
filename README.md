@@ -54,7 +54,8 @@ python ui.py
 
 ### 🎨 截图
 
-![微信图片\_2025-07-01\_155035\_906](https://github.com/user-attachments/assets/b9e744a1-0814-4812-8d0f-6432377502c7)
+![微信图片_2025-07-02_121832_600](https://github.com/user-attachments/assets/529bd573-0ce0-4a39-a1f6-e3926545e042)
+
 
 ## 🤝 贡献
 
