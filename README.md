@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/riceshowerX/SnapForge/blob/main/LICENSE" target="_blank"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: MIT"></a>
+  <a href="https://github.com/riceshowerX/SnapForge/blob/main/LICENSE" target="_blank"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://github.com/riceshowerX/SnapForge/releases/latest" target="_blank"><img src="https://img.shields.io/github/v/release/riceshowerX/SnapForge" alt="Latest Release"></a>
   <a href="https://github.com/riceshowerX/SnapForge/issues" target="_blank"><img src="https://img.shields.io/github/issues/riceshowerX/SnapForge" alt="Open Issues"></a>
   <a href="https://github.com/riceshowerX/SnapForge/pulls" target="_blank"><img src="https://img.shields.io/github/issues-pr/riceshowerX/SnapForge" alt="Pull Requests"></a>
@@ -54,7 +54,9 @@ python ui.py
 
 ## ⚖️ 许可证
 
-SnapForge 使用 MIT 许可。详细信息请参阅 [LICENSE 文件]([https://github.com/riceshowerX/SnapForge/blob/main/LICENSE](https://github.com/riceshowerX/SnapForge/blob/main/LICENSE))。
+
+**SnapForge** 使用 MIT 许可证。详细信息请查看 [LICENSE 文件](https://github.com/riceshowerX/SnapForge/blob/main/LICENSE)。
+
 
 ## ⚠️ 免责声明
 
