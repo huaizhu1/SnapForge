@@ -54,7 +54,7 @@ python ui.py
 
 ## ⚖️ 许可证
 
-SnapForge 使用 Apache License 2.0 许可。详细信息请参阅 [LICENSE 文件](https://github.com/riceshowerX/SnapForge/blob/main/LICENSE)。
+SnapForge 使用 MIT 许可。详细信息请参阅 [LICENSE 文件]([https://github.com/riceshowerX/SnapForge/blob/main/LICENSE](https://github.com/riceshowerX/SnapForge/blob/main/LICENSE))。
 
 ## ⚠️ 免责声明
 
