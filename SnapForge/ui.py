@@ -136,67 +136,46 @@ class ImageProcessor:
             
         return new_name
 
-def process_single_file(self, src_path: str, dest_path: str, 
-                      target_ext: str, quality: int) -> bool:
-    """处理单个文件"""
-    if not os.path.exists(src_path):
-        logger.warning(f"文件不存在: {src_path}")
-        return False
+    def process_single_file(self, src_path: str, dest_path: str, 
+                          target_ext: str, quality: int) -> bool:
+        """处理单个文件"""
+        if not os.path.exists(src_path):
+            logger.warning(f"文件不存在: {src_path}")
+            return False
 
-    # 使用二进制模式读取文件（解决中文路径问题）
-    try:
-        with open(src_path, 'rb') as f:
-            img_bytes = np.frombuffer(f.read(), dtype=np.uint8)
-    except Exception as e:
-        logger.error(f"读取文件失败: {src_path} - {str(e)}")
-        return False
+        # 读取图像
+        image = cv2.imread(src_path, cv2.IMREAD_UNCHANGED)
+        if image is None:
+            logger.error(f"无法读取文件: {src_path}")
+            return False
 
-    # 解码图像
-    image = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-    if image is None:
-        logger.error(f"无法解码文件: {src_path}")
-        return False
+        # 处理透明通道
+        if image.shape[2] == 4 and target_ext in ['.jpg', '.jpeg', '.bmp']:
+            # 创建白色背景
+            bg = np.ones_like(image[:, :, :3]) * 255
+            # 分离alpha通道
+            alpha = image[:, :, 3] / 255.0
+            # 合成图像
+            for c in range(3):
+                bg[:, :, c] = (1 - alpha) * bg[:, :, c] + alpha * image[:, :, c]
+            image = bg.astype(np.uint8)
 
-    # 处理透明通道
-    if len(image.shape) == 3 and image.shape[2] == 4 and target_ext in ['.jpg', '.jpeg', '.bmp']:
-        # 创建白色背景
-        bg = np.ones_like(image[:, :, :3]) * 255
-        # 分离alpha通道
-        alpha = image[:, :, 3] / 255.0
-        # 合成图像
-        for c in range(3):
-            bg[:, :, c] = (1 - alpha) * bg[:, :, c] + alpha * image[:, :, c]
-        image = bg.astype(np.uint8)
-
-    # 准备保存参数
-    save_params = []
-    format_info = self.supported_formats[target_ext]
-    
-    if format_info['writer'] is not None:
-        if quality is None:
-            quality = format_info['default_quality']
-        save_params = [format_info['writer'], quality]
-
-    # 编码并保存图像（解决中文路径问题）
-    ext = target_ext.lstrip('.')
-    if ext.lower() == 'jpg':
-        ext = 'jpeg'  # OpenCV使用jpeg而不是jpg
-    
-    # 编码图像
-    ret, buf = cv2.imencode(f'.{ext}', image, save_params)
-    if not ret:
-        logger.error(f"编码图像失败: {dest_path}")
-        return False
-    
-    # 写入文件
-    try:
-        with open(dest_path, 'wb') as f:
-            f.write(buf.tobytes())
-    except Exception as e:
-        logger.error(f"写入文件失败: {dest_path} - {str(e)}")
-        return False
+        # 准备保存参数
+        save_params = []
+        format_info = self.supported_formats[target_ext]
         
-    return True
+        if format_info['writer'] is not None:
+            if quality is None:
+                quality = format_info['default_quality']
+            save_params = [format_info['writer'], quality]
+
+        # 保存图像
+        success = cv2.imwrite(dest_path, image, save_params)
+        if not success:
+            logger.error(f"保存文件失败: {dest_path}")
+            return False
+            
+        return True
 
 
 class WorkerThread(QThread):
