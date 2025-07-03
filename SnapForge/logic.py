@@ -3,15 +3,16 @@ import shutil
 import tempfile
 from PIL import Image
 import logging
-from typing import Optional, Callable, Tuple, List
+from typing import Optional, Callable, Tuple, List, Dict
 
 class ProcessLog:
     def __init__(self):
         self.entries = []
-    def add(self, msg: str):
-        self.entries.append(msg)
-    def get_text(self):
-        return '\n'.join(self.entries)
+    def add(self, msg: str, level: str = "info"):
+        prefix = {"info": "✅", "warn": "⚠️", "error": "❌", "skip": "⏩"}.get(level, "")
+        self.entries.append(f"{prefix} {msg}")
+    def get_text(self) -> str:
+        return "\n".join(self.entries)
 
 class ImageProcessor:
     def __init__(self):
@@ -30,7 +31,7 @@ class ImageProcessor:
         extension: Optional[str] = None,
         convert_format: Optional[str] = None,
         quality: Optional[int] = None,
-        progress_callback: Optional[Callable[[int], None]] = None,
+        progress_callback: Optional[Callable[[int, str], None]] = None,
         preserve_metadata: bool = True,
         original_file_action: str = "keep",
         resize_enabled: bool = False,
@@ -39,52 +40,57 @@ class ImageProcessor:
         resize_mode: str = "fit",
         resize_only_shrink: bool = True,
         process_log: Optional[ProcessLog] = None
-    ) -> Tuple[int, int]:
+    ) -> Tuple[int, int, List[str]]:
+        """
+        批处理图片，返回成功数、总数、生成文件路径列表
+        """
         if extension:
             extension = self._normalize_extension(extension)
         if convert_format:
             convert_format = self._normalize_extension(convert_format)
         processed = 0
         total_files = len(files)
+        result_paths = []
         backup_dir = None
         if total_files == 0:
             if progress_callback:
-                progress_callback(100)
-            return (0, 0)
+                progress_callback(100, "")
+            return (0, 0, [])
         if original_file_action == "move_to_backup":
             backup_dir = os.path.join(os.path.dirname(files[0]), "original_files_backup")
             os.makedirs(backup_dir, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="imgproc_", dir=os.path.dirname(files[0])) as temp_dir:
             for index, file_path in enumerate(files):
+                filename = os.path.basename(file_path)
                 try:
                     file_ext = self._normalize_extension(os.path.splitext(file_path)[1])
                     if extension and file_ext != extension:
-                        if process_log: process_log.add(f"跳过: {file_path}（类型不符）")
+                        if process_log: process_log.add(f"跳过: {filename}（类型不符）", level="skip")
                         continue
                     try:
                         with Image.open(file_path) as test_img:
                             test_img.verify()
                     except Exception:
-                        if process_log: process_log.add(f"跳过: {file_path}（不是有效图片）")
+                        if process_log: process_log.add(f"跳过: {filename}（不是有效图片）", level="skip")
                         continue
                     # 备份或删除原文件
                     if original_file_action == "move_to_backup" and backup_dir:
-                        filename = os.path.basename(file_path)
                         backup_target = os.path.join(backup_dir, filename)
                         if os.path.exists(backup_target):
                             os.remove(backup_target)
                         shutil.move(file_path, backup_target)
                         file_path = backup_target
                     elif original_file_action == "delete":
-                        temp_original = os.path.join(temp_dir, f"original_{os.path.basename(file_path)}")
+                        temp_original = os.path.join(temp_dir, f"original_{filename}")
                         shutil.move(file_path, temp_original)
                         file_path = temp_original
-                    # 生成新文件名，防止覆盖
+                    # 生成新文件名
                     new_filename = self._generate_filename(
                         prefix, start_number + processed,
                         convert_format or file_ext, os.path.dirname(file_path)
                     )
                     temp_path = os.path.join(temp_dir, new_filename)
+                    # 主处理
                     self._process_image(
                         file_path, temp_path,
                         convert_format, quality, preserve_metadata,
@@ -92,10 +98,8 @@ class ImageProcessor:
                     )
                     final_path = os.path.join(os.path.dirname(file_path), new_filename)
                     if os.path.abspath(file_path) == os.path.abspath(final_path):
-                        # 直接覆盖（如仅压缩/尺寸调整），用临时文件替换
                         shutil.move(temp_path, final_path)
                     elif os.path.exists(final_path):
-                        # 避免覆盖
                         os.remove(final_path)
                         shutil.move(temp_path, final_path)
                     else:
@@ -103,21 +107,23 @@ class ImageProcessor:
                     if original_file_action == "delete":
                         os.remove(file_path)
                     processed += 1
-                    if process_log: process_log.add(f"成功: {os.path.basename(file_path)} → {new_filename}")
+                    result_paths.append(final_path)
+                    if process_log: process_log.add(f"成功: {filename} → {new_filename}", level="info")
                 except Exception as e:
-                    if process_log: process_log.add(f"失败: {os.path.basename(file_path)}，原因: {str(e)}")
+                    if process_log: process_log.add(f"失败: {filename}，原因: {str(e)}", level="error")
                 finally:
-                    self._update_progress(progress_callback, index + 1, total_files)
-        return (processed, total_files)
+                    self._update_progress(progress_callback, index + 1, total_files, filename)
+        return (processed, total_files, result_paths)
 
     def _normalize_extension(self, ext: str) -> Optional[str]:
         if not ext:
             return None
+        ext = ext.lower()
         if not ext.startswith("."):
             ext = "." + ext
-        if ext.lower() == ".jpeg":
+        if ext == ".jpeg":
             return ".jpg"
-        return ext.lower()
+        return ext
 
     def _generate_filename(
         self, 
@@ -145,7 +151,7 @@ class ImageProcessor:
         resize_width: Optional[int] = None,
         resize_height: Optional[int] = None,
         resize_mode: str = "fit",
-        resize_only_shrink: bool = True,
+        resize_only_shrink: bool = True
     ) -> None:
         file_ext = self._normalize_extension(os.path.splitext(src_path)[1])
         if file_ext in self.animated_formats:
@@ -166,7 +172,7 @@ class ImageProcessor:
         resize_width: Optional[int] = None,
         resize_height: Optional[int] = None,
         resize_mode: str = "fit",
-        resize_only_shrink: bool = True,
+        resize_only_shrink: bool = True
     ) -> None:
         with Image.open(src_path) as img:
             exif_data = img.info.get("exif") if preserve_metadata else None
@@ -198,8 +204,9 @@ class ImageProcessor:
         resize_width: Optional[int] = None,
         resize_height: Optional[int] = None,
         resize_mode: str = "fit",
-        resize_only_shrink: bool = True,
+        resize_only_shrink: bool = True
     ) -> None:
+        # 只处理第一帧
         with Image.open(src_path) as img:
             img.seek(0)
             exif_data = img.info.get("exif") if preserve_metadata else None
@@ -219,7 +226,6 @@ class ImageProcessor:
             if exif_data:
                 save_params["exif"] = exif_data
             img.save(dest_path, **save_params)
-            # 不处理所有帧，提示用户
             logging.warning(f"多帧图像 {os.path.basename(src_path)} 只处理了第一帧。")
 
     def _convert_image_mode(self, img: Image.Image, target_ext: Optional[str]) -> Image.Image:
@@ -274,9 +280,9 @@ class ImageProcessor:
             return img
 
     def _update_progress(
-        self, callback: Optional[Callable], 
-        processed: int, total: int
+        self, callback: Optional[Callable[[int, str], None]], 
+        processed: int, total: int, filename: str = ""
     ) -> None:
         if callback:
             progress = int(processed / total * 100)
-            callback(progress)
+            callback(progress, filename)
