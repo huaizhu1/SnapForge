@@ -352,10 +352,10 @@ with tabs[4]:
             with open(path, "wb") as out:
                 out.write(f.read())
             file_paths.append(path)
-        for p in file_paths:
+        for idx, p in enumerate(file_paths):
             if os.path.exists(p):
                 st.image(p, caption=os.path.basename(p), width=180)
-                st.text_area(_("识别结果"), ocr_image(p))
+                st.text_area(_("识别结果"), ocr_image(p), key=f"ocr_result_{idx}_{os.path.basename(p)}")
 
     st.subheader(_("智能图片分类（尺寸/主色调）"))
     files2 = st.file_uploader(_("上传图片进行智能分类"), type=["jpg","jpeg","png","bmp","gif","tiff","webp"], accept_multiple_files=True, key="classify")
