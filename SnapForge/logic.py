@@ -373,7 +373,8 @@ def ai_recognition_deepseek(file_paths, api_key=None, endpoint=None, **kwargs):
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/octet-stream"
         }
-        url = endpoint or "https://api.deepseek.com/v1/vision/detect"
+        allowed_endpoints = ["https://api.deepseek.com/v1/vision/detect"]
+        url = endpoint if endpoint in allowed_endpoints else "https://api.deepseek.com/v1/vision/detect"
         try:
             response = requests.post(
                 url,
