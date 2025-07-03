@@ -1,19 +1,15 @@
 streamlit
+fastapi
+uvicorn
 Pillow
 imagehash
 piexif
 colorthief
 matplotlib
-
-# 云AI识别相关（按需安装）
-baidu-aip  # 百度AI图像识别
-requests   # 用于 DeepSeek 等云API调用
-
-# 其它云厂商SDK（如需正式对接建议根据实际API官方文档安装）
-# aliyun-sdk-core
-# tencentcloud-sdk-python
-# azure-cognitiveservices-vision-computervision
-# google-cloud-vision
-
-# 推荐开发环境
-# python 3.8+
+pytesseract
+baidu-aip
+requests
+oss2
+python-multipart
+rembg
+onnxruntime
