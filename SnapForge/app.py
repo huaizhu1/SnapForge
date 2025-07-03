@@ -318,7 +318,9 @@ with tabs[3]:
         api_params["secret_key"] = st.text_input("Baidu Secret Key")
     elif provider == "deepseek":
         api_params["api_key"] = st.text_input("DeepSeek API Key")
-        api_params["endpoint"] = st.text_input("DeepSeek Endpoint", value="https://api.deepseek.com/v1/vision/detect")
+        user_endpoint = st.text_input("DeepSeek Endpoint", value="https://api.deepseek.com/v1/vision/detect")
+        allowed_endpoints = ["https://api.deepseek.com/v1/vision/detect"]
+        api_params["endpoint"] = user_endpoint if user_endpoint in allowed_endpoints else "https://api.deepseek.com/v1/vision/detect"
     run_btn = st.button(_("开始AI识别"), use_container_width=True, disabled=not files)
     output_dir = "output"
     if run_btn and files:
