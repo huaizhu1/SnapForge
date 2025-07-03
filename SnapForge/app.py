@@ -53,7 +53,7 @@ st.markdown("""
         <a href="https://github.com/riceshowerX/SnapForge/issues/new/choose" target="_blank" title="反馈建议/提Issue">反馈建议</a>
     </div>
     <div class="gh-author">
-        <img src="https://avatars.githubusercontent.com/u/46900545?v=4" alt="riceshowerX头像">
+        <img src="https://avatars.githubusercontent.com/u/138862916?v=4">
         <span>
             由 <a href="https://github.com/riceshowerX" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;">riceshowerX</a> 开发 &nbsp;|&nbsp; <a href="https://github.com/riceshowerX/SnapForge" target="_blank" style="color:#fff;text-decoration:underline;">@SnapForge</a>
         </span>
