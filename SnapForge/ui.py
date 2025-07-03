@@ -4,184 +4,42 @@ import tempfile
 import shutil
 import zipfile
 import io
-from logic import ImageProcessor, ProcessLog
+from logic import (
+    ImageProcessor, ProcessLog, find_duplicate_images,
+    ai_image_recognition_cloud, get_exif_data, get_image_main_color, plot_image_histogram
+)
 from PIL import Image
 
-# =======================
-# SnapForge 定制美观CSS（包含主内容区卡片样式）
-# =======================
+# ------------------- 全局UI美化CSS -------------------
 custom_css = """
 <style>
-body {
-    background: #f3f6fa;
-}
-.header-banner {
-    margin-top: -2.5rem;
-    margin-bottom: 2.5rem;
-    padding: 36px 0 28px 0;
-    background: linear-gradient(90deg, #406aff 0%, #5cc6fa 100%);
-    border-radius: 1.2rem;
-    box-shadow: 0 4px 24px 0 #406aff22;
-    color: #fff;
-    text-align: center;
-    position: relative;
-}
-.header-banner .logo {
-    font-size: 3.6rem;
-    line-height: 1;
-    margin-bottom: 6px;
-}
-.header-banner h1 {
-    font-size: 2.6rem;
-    font-weight: 850;
-    letter-spacing: 1.2px;
-    margin-bottom: 8px;
-    font-family: 'Segoe UI', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-}
-.header-banner .subtitle {
-    font-size: 1.15rem;
-    font-weight: 500;
-    letter-spacing: 0.2px;
-    margin-bottom: 0;
-}
-.gh-btn-area {
-    margin: 1.3rem auto 0.7rem auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1.2em;
-}
-.gh-btn-area a {
-    background: #fff;
-    color: #406aff;
-    font-weight: 700;
-    padding: 0.5em 1.7em;
-    border-radius: 2em;
-    box-shadow: 0 2px 14px #406aff25;
-    font-size: 1.08rem;
-    text-decoration: none;
-    transition: background 0.15s, color 0.15s;
-    border: 2px solid #5cc6fa;
-}
-.gh-btn-area a:hover {
-    background: #406aff;
-    color: #fff;
-    border: 2px solid #406aff;
-}
-.gh-author {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 0.6rem;
-    gap: 0.6em;
-    font-size: 1.05rem;
-}
-.gh-author img {
-    border-radius: 50%;
-    border: 2px solid #fff;
-    width: 34px;
-    height: 34px;
-    box-shadow: 0 2px 10px #406aff22;
-    margin-right: 0.4em;
-}
-.main-card {
-    background: #fff;
-    border-radius: 1.2rem;
-    padding: 2.2rem 2rem 1.5rem 2rem;
-    margin: 0 auto 2rem auto;
-    box-shadow: 0 2px 16px 0 #406aff10;
-    max-width: 780px;
-}
-.card h3 {
-    font-size: 1.35rem;
-    font-weight: 700;
-    margin-bottom: 1.25rem;
-    color: #406aff;
-}
-.stButton>button, .stDownloadButton>button {
-    border-radius: 1.8rem;
-    font-weight: 700;
-    font-size: 1.1rem;
-    min-height: 2.7rem;
-    box-shadow: 0 2px 12px 0 #406aff22;
-    transition: 0.2s;
-}
-.stButton>button:hover, .stDownloadButton>button:hover {
-    background: #406aff;
-    color: #fff;
-}
-.stSlider {
-    padding-bottom: 1.0rem;
-}
-.stProgress > div > div {
-    border-radius: 1rem;
-}
-.stTextInput>div>input, .stNumberInput>div>input, .stSelectbox>div>div>div {
-    border-radius: 0.7rem;
-    min-height: 2.3rem;
-}
-.stAlert {
-    border-radius: 1rem;
-}
-.stTextArea>div>textarea {
-    border-radius: 0.7rem;
-    min-height: 8rem;
-    font-size: 1.03rem;
-}
-.res-card {
-    background:linear-gradient(100deg,#e9f2fe 0%,#e8fcff 100%);
-    border-radius: 1.2rem;
-    padding: 1.5rem 1.5rem 1.3rem 1.5rem;
-    margin: 1.3rem 0;
-    box-shadow: 0 2px 14px 0 #406aff14;
-}
-.footer {
-    margin-top: 2.5rem;
-    padding: 0.8rem 0;
-    color: #b1b4bb;
-    text-align: center;
-    font-size: 1.02rem;
-}
-.exit-btn {
-    display: flex;
-    justify-content: center;
-    margin-top: 1.2rem;
-    margin-bottom: 0.8rem;
-}
-.exit-btn button {
-    background: #fa5252;
-    color: #fff;
-    border: none;
-    padding: 0.75em 2.7em;
-    font-size: 1.18rem;
-    border-radius: 2rem;
-    font-weight: 700;
-    box-shadow: 0 2px 12px #fa525277;
-    cursor: pointer;
-    transition: background 0.18s;
-}
-.exit-btn button:hover {
-    background: #c92a2a;
-}
-.exit-note {
-    text-align: center;
-    color: #fa5252;
-    margin-top: 0.5em;
-    font-size: 1.07rem;
-    font-weight: 500;
-}
-@media (max-width: 800px) {
-    .header-banner { font-size: 1.8rem; padding: 28px 0 18px 0; }
-    .main-card { padding: 1.1rem 0.7rem 1rem 0.7rem; }
-    .res-card { padding: 1.0rem 0.4rem 1.0rem 0.4rem; }
-    .exit-btn button { font-size: 1rem; padding: 0.65em 1.2em; }
-}
+body { background: #f3f6fa; }
+.header-banner {margin-top: -2.5rem;margin-bottom: 2.5rem;padding: 36px 0 28px 0;background: linear-gradient(90deg, #406aff 0%, #5cc6fa 100%);border-radius: 1.2rem;box-shadow: 0 4px 24px 0 #406aff22;color: #fff;text-align: center;position: relative;}
+.header-banner .logo {font-size: 3.6rem;line-height: 1;margin-bottom: 6px;}
+.header-banner h1 {font-size: 2.6rem;font-weight: 850;letter-spacing: 1.2px;margin-bottom: 8px;font-family: 'Segoe UI', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;}
+.header-banner .subtitle {font-size: 1.15rem;font-weight: 500;letter-spacing: 0.2px;margin-bottom: 0;}
+.gh-btn-area {margin: 1.3rem auto 0.7rem auto;display: flex;justify-content: center;align-items: center;gap: 1.2em;}
+.gh-btn-area a {background: #fff;color: #406aff;font-weight: 700;padding: 0.5em 1.7em;border-radius: 2em;box-shadow: 0 2px 14px #406aff25;font-size: 1.08rem;text-decoration: none;transition: background 0.15s, color 0.15s;border: 2px solid #5cc6fa;}
+.gh-btn-area a:hover {background: #406aff;color: #fff;border: 2px solid #406aff;}
+.gh-author {display: flex;flex-direction: row;align-items: center;justify-content: center;margin-bottom: 0.6rem;gap: 0.6em;font-size: 1.05rem;}
+.gh-author img {border-radius: 50%;border: 2px solid #fff;width: 34px;height: 34px;box-shadow: 0 2px 10px #406aff22;margin-right: 0.4em;}
+.main-card {background: #fff;border-radius: 1.2rem;padding: 2.2rem 2rem 1.5rem 2rem;margin: 0 auto 2rem auto;box-shadow: 0 2px 16px 0 #406aff10;max-width: 780px;}
+.card h3 {font-size: 1.35rem;font-weight: 700;margin-bottom: 1.25rem;color: #406aff;}
+.stButton>button, .stDownloadButton>button {border-radius: 1.8rem;font-weight: 700;font-size: 1.1rem;min-height: 2.7rem;box-shadow: 0 2px 12px 0 #406aff22;transition: 0.2s;}
+.stButton>button:hover, .stDownloadButton>button:hover {background: #406aff;color: #fff;}
+.stSlider {padding-bottom: 1.0rem;}
+.stProgress > div > div {border-radius: 1rem;}
+.stTextInput>div>input, .stNumberInput>div>input, .stSelectbox>div>div>div {border-radius: 0.7rem;min-height: 2.3rem;}
+.stAlert {border-radius: 1rem;}
+.stTextArea>div>textarea {border-radius: 0.7rem;min-height: 8rem;font-size: 1.03rem;}
+.res-card {background:linear-gradient(100deg,#e9f2fe 0%,#e8fcff 100%);border-radius: 1.2rem;padding: 1.5rem 1.5rem 1.3rem 1.5rem;margin: 1.3rem 0;box-shadow: 0 2px 14px 0 #406aff14;}
+.footer {margin-top: 2.5rem;padding: 0.8rem 0;color: #b1b4bb;text-align: center;font-size: 1.02rem;}
+@media (max-width: 800px) {.header-banner { font-size: 1.8rem; padding: 28px 0 18px 0; }.main-card { padding: 1.1rem 0.7rem 1rem 0.7rem; }.res-card { padding: 1.0rem 0.4rem 1.0rem 0.4rem; }}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
-# ========== SnapForge 品牌横幅与开源信息 ==========
+# ------------------- 顶部Banner -------------------
 st.markdown("""
 <div class="header-banner">
     <div class="logo">🖼️⚒️</div>
@@ -203,18 +61,20 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ========== 主功能Tabs ==========
 st.markdown('<div class="main-card">', unsafe_allow_html=True)
-tab_titles = ["批量/单文件图片处理", "图片信息查看", "图片去重（开发中）", "AI识别（开发中）"]
+tab_titles = ["批量/单文件图片处理", "图片信息查看", "图片去重", "AI识别"]
 tabs = st.tabs(tab_titles)
 
-# 1️⃣ 批量/单文件图片处理
+# ------------------- Tab 0: 批量/单文件图片处理 -------------------
 with tabs[0]:
     processor = ImageProcessor()
+
     def save_uploaded_files(files, temp_dir):
         file_paths = []
         for f in files:
-            temp_path = os.path.join(temp_dir, f.name)
+            file_name = os.path.basename(f.name)
+            file_name = "".join(x for x in file_name if x.isalnum() or x in "._-")
+            temp_path = os.path.join(temp_dir, file_name)
             with open(temp_path, "wb") as out:
                 out.write(f.read())
             file_paths.append(temp_path)
@@ -241,21 +101,16 @@ with tabs[0]:
         with col_tip:
             st.info("单图片请选“单文件处理”，批量请选“批量处理”", icon="📁")
 
+        files = []
+        extension = None
+
         if mode == "批量处理（多文件上传）":
-            files = st.file_uploader(
-                "上传图片文件",
-                type=["jpg","jpeg","png","bmp","gif","tiff","webp"],
-                accept_multiple_files=True,
-                help="多选支持 Ctrl 或 Shift"
-            )
+            files = st.file_uploader("上传图片文件", type=["jpg","jpeg","png","bmp","gif","tiff","webp"], accept_multiple_files=True, help="多选支持 Ctrl 或 Shift")
             extension = st.selectbox("仅处理指定类型", [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp"], index=0)
         else:
-            one_file = st.file_uploader(
-                "上传一个图片文件",
-                type=["jpg","jpeg","png","bmp","gif","tiff","webp"],
-                accept_multiple_files=False
-            )
-            files = [one_file] if one_file else []
+            one_file = st.file_uploader("上传一个图片文件", type=["jpg","jpeg","png","bmp","gif","tiff","webp"], accept_multiple_files=False)
+            if one_file:
+                files = [one_file]
             extension = None
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -289,13 +144,9 @@ with tabs[0]:
                 )
                 resize_only_shrink = st.checkbox("仅缩小不放大", value=True, disabled=not enable_resize)
             st.markdown("---")
-            para6, para7 = st.columns([2,2])
+            para6 = st.columns([2])[0]
             with para6:
                 preserve_metadata = st.checkbox("保留元数据 (EXIF)", value=True)
-            with para7:
-                file_action = st.selectbox("原始文件处理", [
-                    "保留原始文件", "删除原始文件", "移动到备份目录"
-                ])
         st.markdown('</div>', unsafe_allow_html=True)
 
     with st.container():
@@ -321,6 +172,11 @@ with tabs[0]:
             if not files or (mode == "批量处理（多文件上传）" and len(files) == 0):
                 result_area.warning("请先上传图片文件！", icon="⚠️")
             else:
+                # 合法性检查
+                if enable_resize and (resize_width < 1 or resize_height < 1):
+                    result_area.error("目标宽或高必须为正整数！", icon="❌")
+                    st.stop()
+                # 保存上传文件
                 temp_dir = tempfile.mkdtemp()
                 try:
                     file_paths = save_uploaded_files(files, temp_dir)
@@ -347,11 +203,6 @@ with tabs[0]:
                         'quality': quality if enable_compress else None,
                         'progress_callback': streamlit_progress_callback,
                         'preserve_metadata': preserve_metadata,
-                        'original_file_action': {
-                            "保留原始文件": "keep",
-                            "删除原始文件": "delete",
-                            "移动到备份目录": "move_to_backup"
-                        }[file_action],
                         'resize_enabled': enable_resize,
                         'resize_width': resize_width if enable_resize else None,
                         'resize_height': resize_height if enable_resize else None,
@@ -384,53 +235,146 @@ with tabs[0]:
                     log_area.text_area("日志", log.get_text() if 'log' in locals() else str(e), height=200)
                     import traceback
                     st.error(traceback.format_exc())
+                finally:
+                    try:
+                        shutil.rmtree(temp_dir)
+                    except Exception:
+                        pass
         else:
             result_area.info("请上传图片并设置参数后，点击【开始处理图片】", icon="ℹ️")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# 2️⃣ 图片信息查看
+# ------------------- Tab 1: 图片信息查看（升级版） -------------------
 with tabs[1]:
-    st.subheader("图片信息查看")
+    st.subheader("图片信息查看（升级版）")
     uploaded = st.file_uploader("上传图片查看信息", type=["jpg","jpeg","png","bmp","gif","tiff","webp"])
     if uploaded:
-        img = Image.open(uploaded)
+        temp_dir = tempfile.mkdtemp()
+        temp_path = os.path.join(temp_dir, uploaded.name)
+        with open(temp_path, "wb") as out:
+            out.write(uploaded.read())
+        img = Image.open(temp_path)
         st.image(img, caption="图片预览")
-        st.write("尺寸:", img.size)
-        st.write("模式:", img.mode)
-        st.write("格式:", img.format)
-        exif_data = img.info.get("exif")
+
+        # 文件和基础信息
+        st.write(f"**尺寸**: {img.size}  |  **模式**: {img.mode}  |  **格式**: {img.format}")
+        st.write(f"**文件大小**: {os.path.getsize(temp_path)//1024} KB")
+        dpi = img.info.get("dpi")
+        if dpi: st.write("**DPI**:", dpi)
+
+        # EXIF数据
+        exif_data = get_exif_data(temp_path)
         if exif_data:
-            st.write("EXIF信息存在，可以进一步解析")
+            with st.expander("EXIF详细信息"):
+                for k,v in exif_data.items():
+                    st.write(f"`{k}`: {v}")
+                if "GPSLatitude" in exif_data and "GPSLongitude" in exif_data:
+                    lat = exif_data["GPSLatitude"]
+                    lon = exif_data["GPSLongitude"]
+                    st.markdown(f"[在地图中查看](https://maps.google.com/?q={lat},{lon})")
+                st.download_button("导出EXIF为JSON", data=str(exif_data), file_name="exif.json")
         else:
-            st.write("无EXIF信息")
+            st.info("无EXIF元数据")
 
-# 3️⃣ 图片去重（开发中）
+        # 主色与色板
+        dom_color, palette = get_image_main_color(temp_path)
+        if dom_color:
+            st.write("**主色调**:")
+            st.markdown(f'<div style="width:50px;height:30px;background:rgb{dom_color};display:inline-block;border-radius:3px;border:1px solid #888"></div>', unsafe_allow_html=True)
+            st.write("**色板**:")
+            for col in palette:
+                st.markdown(f'<div style="width:30px;height:20px;background:rgb{col};display:inline-block;border-radius:2px;border:1px solid #ccc"></div>', unsafe_allow_html=True)
+        else:
+            st.info("无法获取主色信息")
+
+        # 直方图
+        buf = plot_image_histogram(temp_path)
+        if buf:
+            st.image(buf, caption="RGB直方图", use_column_width=False)
+        else:
+            st.info("无法生成直方图")
+
+        # 动图帧数
+        if getattr(img, "is_animated", False):
+            st.write(f"**帧数**: {img.n_frames}")
+        st.info("如需更多元数据支持或可视化对比，请提出需求！")
+        shutil.rmtree(temp_dir)
+
+# ------------------- Tab 2: 图片去重 -------------------
 with tabs[2]:
-    st.subheader("图片去重（开发中）")
-    st.info("此功能即将上线，敬请期待！")
+    st.subheader("图片去重")
+    files = st.file_uploader("上传需去重的图片", type=["jpg","jpeg","png","bmp","gif","tiff","webp"], accept_multiple_files=True)
+    threshold = st.slider("相似度阈值(越低越严格)", 0, 20, 8)
+    run_btn = st.button("开始去重", use_container_width=True, disabled=not files)
+    if run_btn and files:
+        temp_dir = tempfile.mkdtemp()
+        file_paths = []
+        for f in files:
+            path = os.path.join(temp_dir, f.name)
+            with open(path, "wb") as out:
+                out.write(f.read())
+            file_paths.append(path)
+        with st.spinner("正在查找重复图片..."):
+            dups = find_duplicate_images(file_paths, threshold)
+            if not dups:
+                st.success("未检测到重复图片。")
+            else:
+                st.warning(f"检测到 {len(dups)} 组重复图片：")
+                for group in dups:
+                    cols = st.columns(len(group))
+                    for idx, path in enumerate(group):
+                        img = Image.open(path)
+                        cols[idx].image(img, caption=os.path.basename(path), width=120)
+                st.info("请手动删除或下载需要保留/去除的图片。")
+        shutil.rmtree(temp_dir)
 
-# 4️⃣ AI识别（开发中）
+# ------------------- Tab 3: AI识别 -------------------
 with tabs[3]:
-    st.subheader("AI识别（开发中）")
-    st.info("此功能即将上线，敬请期待！")
+    st.subheader("AI识别 - 云端图片内容标签")
+    files = st.file_uploader("上传图片进行AI识别", type=["jpg","jpeg","png","bmp","gif","tiff","webp"], accept_multiple_files=True)
+    provider = st.selectbox("选择AI识别服务", ["baidu", "aliyun", "tencent", "azure", "google", "deepseek"])
+    api_params = {}
+    if provider == "baidu":
+        api_params["app_id"] = st.text_input("Baidu App ID")
+        api_params["api_key"] = st.text_input("Baidu API Key")
+        api_params["secret_key"] = st.text_input("Baidu Secret Key")
+    elif provider == "aliyun":
+        api_params["access_key_id"] = st.text_input("Aliyun Access Key ID")
+        api_params["access_key_secret"] = st.text_input("Aliyun Access Key Secret")
+        api_params["region_id"] = st.text_input("Aliyun Region ID", value="cn-shanghai")
+    elif provider == "tencent":
+        api_params["secret_id"] = st.text_input("Tencent Secret ID")
+        api_params["secret_key"] = st.text_input("Tencent Secret Key")
+        api_params["region"] = st.text_input("Tencent Region", value="ap-guangzhou")
+    elif provider == "azure":
+        api_params["subscription_key"] = st.text_input("Azure Subscription Key")
+        api_params["endpoint"] = st.text_input("Azure Endpoint")
+    elif provider == "google":
+        api_params["credentials_json"] = st.text_input("Google Cloud credentials.json 路径")
+    elif provider == "deepseek":
+        api_params["api_key"] = st.text_input("DeepSeek API Key")
+        api_params["endpoint"] = st.text_input("DeepSeek Endpoint", value="https://api.deepseek.com/v1/vision/detect")
+    run_btn = st.button("开始AI识别", use_container_width=True, disabled=not files)
+    if run_btn and files:
+        temp_dir = tempfile.mkdtemp()
+        file_paths = []
+        for f in files:
+            path = os.path.join(temp_dir, f.name)
+            with open(path, "wb") as out:
+                out.write(f.read())
+            file_paths.append(path)
+        with st.spinner("正在识别图片内容..."):
+            try:
+                results = ai_image_recognition_cloud(file_paths, provider=provider, **api_params)
+                for path, tags in results.items():
+                    st.image(path, caption=os.path.basename(path), width=180)
+                    st.write("识别标签：", ", ".join(tags))
+            except Exception as e:
+                st.error(f"AI识别调用失败: {e}")
+        shutil.rmtree(temp_dir)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ==================
-# 关闭页面功能按钮
-# ==================
-st.markdown("""
-<div class="exit-btn">
-    <button onclick="window.close();">❌ 关闭/退出网页</button>
-</div>
-<div class="exit-note">
-    如未自动关闭，请手动关闭本标签页
-</div>
-""", unsafe_allow_html=True)
-
-# ==================
-# 定制化页脚
-# ==================
 st.markdown("""
 <div class="footer">
     <span>© 2025 <b>SnapForge</b> | <a href="https://github.com/riceshowerX/SnapForge" target="_blank" style="color:#406aff;text-decoration:none;font-weight:500;">GitHub开源项目</a> | 设计&开发：<a href="https://github.com/riceshowerX" target="_blank" style="color:#406aff;text-decoration:none;font-weight:500;">riceshowerX</a>
