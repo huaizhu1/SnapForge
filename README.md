@@ -127,7 +127,8 @@ SnapForge 的「去背景」功能基于 [rembg](https://github.com/danielgatis/
 
 ## 📄 许可证
 
-本项目采用 [MIT License](https://github.com/riceshowerX/SnapForge/blob/main/LICENSE) 开源，欢迎自由使用与再开发。
+本项目主体代码采用 [MIT License](https://github.com/riceshowerX/SnapForge/blob/main/LICENSE) 开源，欢迎自由使用与再开发。
+本项目依赖的 Streamlit 库采用 [Apache License 2.0](https://github.com/riceshowerX/SnapForge/blob/main/LICENSE%E2%80%91STREAMLIT)（已在 LICENSE-APACHE 中保留完整版权与许可证文本）。
 
 ---
 
