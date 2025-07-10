@@ -136,4 +136,3 @@ SnapForge 的去背景功能基于 [rembg](https://github.com/danielgatis/rembg)
 
 本项目按“原样”提供，不附带任何明示或暗示的保证。  
 使用风险由用户自担，开发者和贡献者不对任何直接或间接损失负责。详见 LICENSE 文件。
-````
