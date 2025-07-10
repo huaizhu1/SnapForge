@@ -1,4 +1,4 @@
-````markdown name=README.md
+
 <div align="center">
   <img src="https://github.com/riceshowerX/picx-images-hosting/raw/master/网站/android-chrome-192x192-1.6wqw9el8i6.webp" alt="SnapForge Logo" width="80" height="80">
   <h1>SnapForge</h1>
